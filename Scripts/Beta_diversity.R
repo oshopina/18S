@@ -1,16 +1,22 @@
 ##Beta-diversity for 18S data
 ##All the code is for relative abundance
 
+##Load libraries
 library(vegan)
 library(dplyr)
 
+##Load data
 env.18S <- read.table('Data/env_18S.csv',header=TRUE,sep=',',row.names=1)
 otu.18S.tmp <- read.table('Data/otu_18S_4350.csv',header=TRUE,sep=',',row.names=1)
+
+##Normilize data
 otu.18S <- as.data.frame(t(otu.18S.tmp/4350))
 rowSums(otu.18S)
 
+##Change the row orders to the same in both tables
 otu.18S <- otu.18S[match(rownames(env.18S), rownames(otu.18S)), ]
 
+##Set colours for pH group
 env.18S <- env.18S %>%
   mutate(Colour = case_when(
     endsWith(pH.group, "g4") ~ "#b51945",
@@ -22,13 +28,14 @@ env.18S <- env.18S %>%
     endsWith(pH.group, "g7") ~ "#388fb8"
   ))
 
+##Count DCA
 DCA.18S.RA <- decorana(otu.18S)
 
-# Extract the site and species scores from DECORANA results
+## Extract the site and species scores from DECORANA results
 site_scores <- scores(DCA.18S.RA, display = 'sites')
 species_scores <- scores(DCA.18S.RA, display = 'species')
 
-# Convert the scores to data frames
+## Convert the scores to data frames
 df_sites <- as.data.frame(site_scores)
 df_species <- as.data.frame(species_scores)
 
@@ -40,7 +47,7 @@ bigs_otu <- otu.18S %>% t() %>%
 
 df_species = df_species[rownames(df_species) %in% rownames(bigs_otu),]
 
-# Plot the ordination with sites as points and species as error bars
+## Plot the ordination with sites as points and species as error bars
 ggplot() +
   geom_point(
     data = df_sites,
@@ -66,3 +73,6 @@ ggplot() +
     y = (df_species$DCA2),
     label = rownames(df_species)
   )
+
+##PERMANOVA
+adonis2(otu.18S ~ env.18S$pH)
